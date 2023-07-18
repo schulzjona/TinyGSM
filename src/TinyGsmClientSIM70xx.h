@@ -218,6 +218,23 @@ class TinyGsmSim70xx : public TinyGsmModem<TinyGsmSim70xx<modemType>>,
     return thisModem().waitResponse() == 1;
   }
 
+  String queryDNS(const char* domain) {
+    String result = "";
+    thisModem().sendAT(GF("+CDNSGIP=\""), domain, GF("\""));
+    if(waitResponse(GSM_OK, GSM_ERROR) != 1){
+      DBG(F("### Faild send +CDNSGIP"));
+      return "";
+    }
+    if(waitResponse(5000L, GF("+CDNSGIP: 1,"), GF("+CDNSGIP: 0,")) != 1){
+      DBG(F("### Faild response +CDNSGIP"));
+      return "";
+    }
+    this->streamSkipUntil(',');
+    this->streamSkipUntil('"');
+    result = stream.readStringUntil('"');
+    return result;
+  }
+
   bool getNetworkSystemMode(bool& n, int16_t& stat) {
     // n: whether to automatically report the system mode info
     // stat: the current service. 0 if it not connected
